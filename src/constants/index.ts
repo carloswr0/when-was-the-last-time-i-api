@@ -1,0 +1,1 @@
+export const reminderTypes = ["one_time", "recurring"] as const;
