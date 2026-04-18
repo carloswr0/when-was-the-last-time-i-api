@@ -21,6 +21,17 @@ class UserRemindersGroupRepository {
     return doc?.toObject() as unknown as UserRemindersGroupType | null;
   }
 
+  async findByUserAndRemindersGroupId(
+    userId: string,
+    remindersGroupId: string,
+  ): Promise<UserRemindersGroupType | null> {
+    const doc = await this.userRemindersGroupModel.findOne({
+      user: userId,
+      remindersGroup: remindersGroupId,
+    });
+    return doc?.toObject() as unknown as UserRemindersGroupType | null;
+  }
+
   /** Membership rows for a user, with `remindersGroup` populated. */
   async findByUserId(userId: string): Promise<UserRemindersGroupType[]> {
     const docs = await this.userRemindersGroupModel

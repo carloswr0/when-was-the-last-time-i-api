@@ -1,17 +1,16 @@
 import express from "express";
-import RemindersGroupController from "../controllers/groups.controller.ts";
-//import authMiddleware from "../middlewares/authMiddleware.js";
-//import channelRouter from "./channel.router.ts";
-//import verifyWorkspaceMembershipAndPermissions from "../middlewares/verifyWorkspaceMembershipAndPermissions.middleware.js";
+import GroupsController from "../controllers/groups.controller.ts";
+import authMiddleware from "../middlewares/auth.middleware.ts";
+import reminderRouter from "./reminder.router.ts";
+import verifyRolePermissionAndBelonging from "../middlewares/verifyRolePermissionAndBelonging.middleware.ts";
 
-const workspaceRouter = express.Router();
-const workspaceController = new RemindersGroupController();
+const groupsRouter = express.Router();
+const groupsController = new GroupsController();
 
-//workspaceRouter.use(authMiddleware);
+groupsRouter.use(authMiddleware);
+groupsRouter.post("/", groupsController.createGroup);
+groupsRouter.get("/get-user-workspaces", groupsController.getGroup);
+groupsRouter.get("/:workspace_id", verifyRolePermissionAndBelonging([]), groupsController.getGroupDetails);
+groupsRouter.use("/:workspace_id/channel", reminderRouter);
 
-workspaceRouter.post("/", workspaceController.createGroup);
-workspaceRouter.get("/get-user-workspaces", workspaceController.getGroup);
-//workspaceRouter.get("/:workspace_id", verifyWorkspaceMembershipAndPermissions([]), workspaceController.getWorkspaceDetails);
-//workspaceRouter.use("/:workspace_id/channel", channelRouter);
-
-export default workspaceRouter;
+export default groupsRouter;
