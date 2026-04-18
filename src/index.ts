@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import ENVIRONTMENT from "./config/environment.config.ts";
 import connectToMongoDB from "./config/mongodb.config.ts";
-//import healthRouter from "./routers/health.router.js";
+import healthRouter from "./routers/health.router.ts";
 import authRouter from "./routers/auth.router.ts";
 // import authMiddleware from "./middlewares/authMiddleware.js";
 // import workspaceRouter from "./routers/workspace.router.js";
@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//app.use("/api/health", healthRouter);
+app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 //app.use(
 //  "/api/workspaces",

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import ServerError from "../helpers/error.helper.ts";
+import { serverErrorMessage } from "../helpers/serverErrorMessage.helper.ts";
 import authService, {
   type LoginInput,
   type RegisterInput,
@@ -7,10 +8,6 @@ import authService, {
   type ResetPasswordRequestInput,
   type VerifyEmailInput,
 } from "../services/auth.service.ts";
-
-function serverErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Internal server error";
-}
 
 class AuthController {
   async register(req: Request, res: Response): Promise<void> {

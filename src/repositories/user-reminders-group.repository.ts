@@ -21,6 +21,24 @@ class UserRemindersGroupRepository {
     return doc?.toObject() as unknown as UserRemindersGroupType | null;
   }
 
+  /** Membership rows for a user, with `remindersGroup` populated. */
+  async findByUserId(userId: string): Promise<UserRemindersGroupType[]> {
+    const docs = await this.userRemindersGroupModel
+      .find({ user: userId })
+      .populate("remindersGroup");
+    return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
+  }
+
+  /** Membership rows for a reminders group, with `user` populated. */
+  async findByRemindersGroupId(
+    remindersGroupId: string
+  ): Promise<UserRemindersGroupType[]> {
+    const docs = await this.userRemindersGroupModel
+      .find({ remindersGroup: remindersGroupId })
+      .populate("user");
+    return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
+  }
+
   async getAll(): Promise<UserRemindersGroupType[]> {
     const docs = await this.userRemindersGroupModel.find();
     return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
