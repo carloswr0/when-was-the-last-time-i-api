@@ -21,6 +21,12 @@ class UserRepository {
     return user?.toObject() as unknown as UserType | null;
   }
 
+  /** Includes `password` for auth flows (`password` is `select: false` on the schema). */
+  async findByEmailWithPassword(email: string): Promise<UserType | null> {
+    const user = await this.userModel.findOne({ email }).select("+password");
+    return user?.toObject() as unknown as UserType | null;
+  }
+
   async getAll(): Promise<UserType[]> {
     const users = await this.userModel.find();
     return users.map((u) => u.toObject() as unknown as UserType);

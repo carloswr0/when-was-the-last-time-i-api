@@ -3,7 +3,7 @@ import cors from "cors";
 import ENVIRONTMENT from "./config/environment.config.ts";
 import connectToMongoDB from "./config/mongodb.config.ts";
 //import healthRouter from "./routers/health.router.js";
-//import authRouter from "./routers/auth.router.js";
+import authRouter from "./routers/auth.router.ts";
 // import authMiddleware from "./middlewares/authMiddleware.js";
 // import workspaceRouter from "./routers/workspace.router.js";
 
@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 //app.use("/api/health", healthRouter);
-//app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter);
 //app.use(
 //  "/api/workspaces",
 //  authMiddleware,
