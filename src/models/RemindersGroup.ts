@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { type Model } from "mongoose";
 
-export const remindersGroupTypes = ["personal", "shared"] as const;
+import { remindersGroupTypes } from "../constants/index.ts";
 
 const remindersGroupSchema = new mongoose.Schema(
   {
@@ -24,6 +24,8 @@ const remindersGroupSchema = new mongoose.Schema(
   }
 );
 
-export const RemindersGroupModel =
-  mongoose.models.RemindersGroup ??
-  mongoose.model("RemindersGroup", remindersGroupSchema);
+export type RemindersGroupType = mongoose.InferSchemaType<
+  typeof remindersGroupSchema
+>;
+
+export const RemindersGroupModel = (mongoose.models.RemindersGroup ?? mongoose.model("RemindersGroup", remindersGroupSchema)) as Model<RemindersGroupType>;

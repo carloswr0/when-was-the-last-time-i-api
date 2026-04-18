@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { type Model } from "mongoose";
 
-import { reminderTypes } from "../constants";
+import { reminderTypes } from "../constants/index.ts";
 
 const reminderStepSchema = new mongoose.Schema(
   {
@@ -36,7 +36,7 @@ const reminderStepSchema = new mongoose.Schema(
       required: [true, "Type is required"],
       enum: {
         values: reminderTypes,
-        message: "{VALUE} is not a valid reminder type",
+        message: "{VALUE} is not a valid reminderstep type",
       },
     },
     lastTimeSomeoneDidThis: {
@@ -54,6 +54,9 @@ const reminderStepSchema = new mongoose.Schema(
   }
 );
 
-export const ReminderStepModel =
-  mongoose.models.ReminderStep ??
-  mongoose.model("ReminderStep", reminderStepSchema);
+export type ReminderStepType = mongoose.InferSchemaType<
+  typeof reminderStepSchema
+>;
+
+export const ReminderStepModel = (mongoose.models.ReminderStep ??
+  mongoose.model("ReminderStep", reminderStepSchema)) as Model<ReminderStepType>;

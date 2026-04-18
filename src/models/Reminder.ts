@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { type Model } from "mongoose";
 
-import { reminderTypes } from "../constants";
+import { reminderTypes } from "../constants/index.ts";
 
 const reminderSchema = new mongoose.Schema(
   {
@@ -46,7 +46,8 @@ const reminderSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
- );
+);
 
-export const ReminderModel =
-  mongoose.models.Reminder ?? mongoose.model("Reminder", reminderSchema);
+export type ReminderType = mongoose.InferSchemaType<typeof reminderSchema>;
+
+export const ReminderModel = (mongoose.models.Reminder ?? mongoose.model("Reminder", reminderSchema)) as Model<ReminderType>;

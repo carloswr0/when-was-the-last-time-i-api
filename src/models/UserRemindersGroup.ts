@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { type Model } from "mongoose";
 
-export const userRemindersGroupRoles = ["owner", "member", "viewer"] as const;
+import { userRemindersGroupRoles } from "../constants/index.ts";
 
 const userRemindersGroupSchema = new mongoose.Schema(
   {
@@ -21,7 +21,7 @@ const userRemindersGroupSchema = new mongoose.Schema(
       required: [true, "Role is required"],
       enum: {
         values: userRemindersGroupRoles,
-        message: "{VALUE} is not a valid role",
+        message: "{VALUE} is not a valid user reminders group role",
       },
     },
   },
@@ -32,6 +32,12 @@ const userRemindersGroupSchema = new mongoose.Schema(
 
 userRemindersGroupSchema.index({ user: 1, remindersGroup: 1 }, { unique: true });
 
-export const UserRemindersGroupModel =
-  mongoose.models.UserRemindersGroup ??
-  mongoose.model("UserRemindersGroup", userRemindersGroupSchema);
+export type UserRemindersGroupType = mongoose.InferSchemaType<
+  typeof userRemindersGroupSchema
+>;
+
+export const UserRemindersGroupModel = (mongoose.models.UserRemindersGroup ??
+  mongoose.model(
+    "UserRemindersGroup",
+    userRemindersGroupSchema
+  )) as Model<UserRemindersGroupType>;

@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
+import mongoose, { type Model } from "mongoose";
 
 const SALT_ROUNDS = 10;
 
@@ -80,4 +80,7 @@ userSchema.methods.comparePassword = async function (
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export const UserModel = mongoose.models.User ?? mongoose.model("User", userSchema);
+export type UserType = mongoose.InferSchemaType<typeof userSchema>;
+
+/** Single `Model` type — avoids a `??` union that breaks `findById` / `findOne` inference. */
+export const UserModel = (mongoose.models.User ?? mongoose.model("User", userSchema)) as Model<UserType>;

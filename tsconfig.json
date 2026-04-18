@@ -42,7 +42,8 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
   },
-  "include": ["src/**/*.js", "src/config/environment.config.ts", "src/index.ts", "src/models/User.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }
