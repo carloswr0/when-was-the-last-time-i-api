@@ -2,7 +2,11 @@ import type { UpdateQuery } from "mongoose";
 import { UserModel, type UserType } from "../models/User.ts";
 
 class UserRepository {
-  constructor(private readonly userModel: typeof UserModel) {}
+  private readonly userModel: typeof UserModel;
+
+  constructor(userModel: typeof UserModel) {
+    this.userModel = userModel;
+  }
 
   async create(
     user: Parameters<typeof UserModel.create>[0]

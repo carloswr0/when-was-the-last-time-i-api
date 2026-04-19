@@ -2,7 +2,11 @@ import type { UpdateQuery } from "mongoose";
 import { ReminderModel, type ReminderType } from "../models/Reminder.ts";
 
 class ReminderRepository {
-  constructor(private readonly reminderModel: typeof ReminderModel) {}
+  private readonly reminderModel: typeof ReminderModel;
+
+  constructor(reminderModel: typeof ReminderModel) {
+    this.reminderModel = reminderModel;
+  }
 
   async create(
     reminder: Parameters<typeof ReminderModel.create>[0]

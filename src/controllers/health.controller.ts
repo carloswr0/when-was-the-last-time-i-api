@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { userRepository } from "../repositories/user.repository.js";
+import { userRepository } from "../repositories/user.repository.ts";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

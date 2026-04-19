@@ -5,9 +5,11 @@ import {
 } from "../models/UserRemindersGroup.ts";
 
 class UserRemindersGroupRepository {
-  constructor(
-    private readonly userRemindersGroupModel: typeof UserRemindersGroupModel
-  ) {}
+  private readonly userRemindersGroupModel: typeof UserRemindersGroupModel;
+
+  constructor(userRemindersGroupModel: typeof UserRemindersGroupModel) {
+    this.userRemindersGroupModel = userRemindersGroupModel;
+  }
 
   async create(
     membership: Parameters<typeof UserRemindersGroupModel.create>[0]

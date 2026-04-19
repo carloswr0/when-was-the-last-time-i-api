@@ -48,6 +48,7 @@ export type ResetPasswordInput = {
 
 class AuthService {
   async register({ name, email, password }: RegisterInput) {
+   
     if (!name || !email || !password) {
       throw new ServerError({
         message: "Name, email and password are required",

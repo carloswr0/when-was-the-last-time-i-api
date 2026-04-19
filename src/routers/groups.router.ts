@@ -9,7 +9,7 @@ const groupsController = new GroupsController();
 
 groupsRouter.use(authMiddleware);
 groupsRouter.post("/", groupsController.createGroup);
-groupsRouter.get("/get-user-workspaces", groupsController.getGroup);
+groupsRouter.get("/get-user-groups", groupsController.getGroup);
 groupsRouter.get("/:workspace_id", verifyRolePermissionAndBelonging([]), groupsController.getGroupDetails);
 groupsRouter.use("/:workspace_id/channel", reminderRouter);
 

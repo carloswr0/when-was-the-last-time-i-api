@@ -5,7 +5,11 @@ import {
 } from "../models/ReminderStep.ts";
 
 class ReminderStepRepository {
-  constructor(private readonly reminderStepModel: typeof ReminderStepModel) {}
+  private readonly reminderStepModel: typeof ReminderStepModel;
+
+  constructor(reminderStepModel: typeof ReminderStepModel) {
+    this.reminderStepModel = reminderStepModel;
+  }
 
   async create(
     step: Parameters<typeof ReminderStepModel.create>[0]

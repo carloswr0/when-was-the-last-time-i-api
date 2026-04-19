@@ -11,12 +11,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Name cannot exceed 100 characters"],
     },
-    lastname: {
-      type: String,
-      required: [true, "Last name is required"],
-      trim: true,
-      maxlength: [100, "Last name cannot exceed 100 characters"],
-    },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -50,10 +44,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-userSchema.virtual("fullName").get(function () {
-  return `${this.name} ${this.lastname}`.trim();
-});
 
 userSchema.set("toJSON", {
   virtuals: true,

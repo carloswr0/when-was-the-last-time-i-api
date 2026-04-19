@@ -1,6 +1,6 @@
 import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import type { NextFunction, Request, Response } from "express";
-import ENVIRONTMENT from "../config/environment.config.js";
+import ENVIRONTMENT from "../config/environment.config.ts";
 
 function authMiddleware(
   req: Request,
