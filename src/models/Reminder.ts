@@ -1,6 +1,7 @@
 import mongoose, { type Model } from "mongoose";
 
 import { reminderTypes } from "../constants/index.ts";
+import { applyApiSerialization } from "./mongoose-serialization.ts";
 
 const reminderSchema = new mongoose.Schema(
   {
@@ -42,11 +43,23 @@ const reminderSchema = new mongoose.Schema(
       ref: "UserRemindersGroup",
       default: null,
     },
+    frequency: {
+      type: Number,
+      required: [true, "Frequency is required"],
+    },
+    pushNotificationsEnabled: {
+      type: Boolean,
+      required: true,
+      default: false,
+    }
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
+
+applyApiSerialization(reminderSchema);
 
 export type ReminderType = mongoose.InferSchemaType<typeof reminderSchema>;
 

@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
+import { ErrorCode } from "../constants/error-codes.ts";
 import { reminderTypes } from "../constants/index.ts";
-import ServerError from "../helpers/error.helper.ts";
+import ServerError, {
+  apiErrorBodyFromServerError,
+  internalErrorBody,
+} from "../helpers/error.helper.ts";
+import { sendError, sendSuccess } from "../helpers/response.helper.ts";
 import reminderService from "../services/reminder.service.ts";
 
 function isReminderType(
@@ -38,20 +43,20 @@ class ReminderController {
       };
 
       if (typeof title !== "string" || !title.trim()) {
-        res.status(400).json({
-          message: "Title is required",
-          status: 400,
-          ok: false,
-        });
+        const msg = "Title is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "title", message: msg }],
+        }, msg);
         return;
       }
 
       if (!isReminderType(type)) {
-        res.status(400).json({
-          message: `type must be one of: ${reminderTypes.join(", ")}`,
-          status: 400,
-          ok: false,
-        });
+        const msg = `type must be one of: ${reminderTypes.join(", ")}`;
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "type", message: msg }],
+        }, msg);
         return;
       }
 
@@ -69,52 +74,26 @@ class ReminderController {
             : undefined,
       });
 
-      res.status(201).json({
-        ok: true,
-        status: 201,
-        message: "Reminder created successfully",
-        data: { reminder },
-      });
+      sendSuccess(res, 201, { reminder }, "Reminder created successfully");
     } catch (error) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
 
   async getAllReminders(_req: Request, res: Response): Promise<void> {
     try {
       const reminders = await reminderService.getAllReminders();
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "Reminders retrieved successfully",
-        data: { reminders },
-      });
+      sendSuccess(res, 200, { reminders }, "Reminders retrieved successfully");
     } catch (error) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
 
@@ -122,34 +101,21 @@ class ReminderController {
     try {
       const reminderId = routeParamId(req.params.reminder_id);
       if (!reminderId) {
-        res.status(400).json({
-          message: "reminder_id is required",
-          status: 400,
-          ok: false,
-        });
+        const msg = "reminder_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "reminder_id", message: msg }],
+        }, msg);
         return;
       }
       const reminder = await reminderService.getReminderById(reminderId);
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "Reminder retrieved successfully",
-        data: { reminder },
-      });
+      sendSuccess(res, 200, { reminder }, "Reminder retrieved successfully");
     } catch (error) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
 
@@ -157,11 +123,11 @@ class ReminderController {
     try {
       const reminderId = routeParamId(req.params.reminder_id);
       if (!reminderId) {
-        res.status(400).json({
-          message: "reminder_id is required",
-          status: 400,
-          ok: false,
-        });
+        const msg = "reminder_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "reminder_id", message: msg }],
+        }, msg);
         return;
       }
       const body = req.body as Record<string, unknown>;
@@ -169,44 +135,44 @@ class ReminderController {
 
       if ("title" in body) {
         if (typeof body.title !== "string" || !body.title.trim()) {
-          res.status(400).json({
-            message: "title must be a non-empty string",
-            status: 400,
-            ok: false,
-          });
+          const msg = "title must be a non-empty string";
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "title", message: msg }],
+          }, msg);
           return;
         }
         update.title = body.title.trim();
       }
       if ("type" in body) {
         if (!isReminderType(body.type)) {
-          res.status(400).json({
-            message: `type must be one of: ${reminderTypes.join(", ")}`,
-            status: 400,
-            ok: false,
-          });
+          const msg = `type must be one of: ${reminderTypes.join(", ")}`;
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "type", message: msg }],
+          }, msg);
           return;
         }
         update.type = body.type;
       }
       if ("description" in body) {
         if (body.description != null && typeof body.description !== "string") {
-          res.status(400).json({
-            message: "description must be a string or null",
-            status: 400,
-            ok: false,
-          });
+          const msg = "description must be a string or null";
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "description", message: msg }],
+          }, msg);
           return;
         }
         update.description = body.description;
       }
       if ("icon" in body) {
         if (body.icon != null && typeof body.icon !== "string") {
-          res.status(400).json({
-            message: "icon must be a string or null",
-            status: 400,
-            ok: false,
-          });
+          const msg = "icon must be a string or null";
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "icon", message: msg }],
+          }, msg);
           return;
         }
         update.icon = body.icon;
@@ -216,46 +182,33 @@ class ReminderController {
           body.bannerImage != null &&
           typeof body.bannerImage !== "string"
         ) {
-          res.status(400).json({
-            message: "bannerImage must be a string or null",
-            status: 400,
-            ok: false,
-          });
+          const msg = "bannerImage must be a string or null";
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "bannerImage", message: msg }],
+          }, msg);
           return;
         }
         update.bannerImage = body.bannerImage;
       }
 
       if (Object.keys(update).length === 0) {
-        res.status(400).json({
-          message: "No valid fields to update",
-          status: 400,
-          ok: false,
-        });
+        const msg = "No valid fields to update";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "body", message: msg }],
+        }, msg);
         return;
       }
 
       const reminder = await reminderService.updateReminder(reminderId, update);
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "Reminder updated successfully",
-        data: { reminder },
-      });
+      sendSuccess(res, 200, { reminder }, "Reminder updated successfully");
     } catch (error) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
 
@@ -263,33 +216,21 @@ class ReminderController {
     try {
       const reminderId = routeParamId(req.params.reminder_id);
       if (!reminderId) {
-        res.status(400).json({
-          message: "reminder_id is required",
-          status: 400,
-          ok: false,
-        });
+        const msg = "reminder_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "reminder_id", message: msg }],
+        }, msg);
         return;
       }
       await reminderService.deleteReminder(reminderId);
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "Reminder deleted successfully",
-      });
+      sendSuccess(res, 200, null, "Reminder deleted successfully");
     } catch (error) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
 }

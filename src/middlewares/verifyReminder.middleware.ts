@@ -1,6 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { isValidObjectId } from "mongoose";
-import ServerError from "../helpers/error.helper.ts";
+import { ErrorCode } from "../constants/error-codes.ts";
+import ServerError, {
+  apiErrorBodyFromServerError,
+  internalErrorBody,
+} from "../helpers/error.helper.ts";
+import { sendError } from "../helpers/response.helper.ts";
 import type { ReminderType } from "../models/Reminder.ts";
 import reminderService from "../services/reminder.service.ts";
 
@@ -22,20 +27,20 @@ async function verifyReminder(
   const reminderId = reminderParamId(req.params.reminder_id);
 
   if (!reminderId) {
-    res.status(400).json({
-      message: "reminder_id is required",
-      status: 400,
-      ok: false,
-    });
+    const msg = "reminder_id is required";
+    sendError(res, 400, {
+      code: ErrorCode.VALIDATION_ERROR,
+      details: [{ field: "reminder_id", message: msg }],
+    }, msg);
     return;
   }
 
   if (!isValidObjectId(reminderId)) {
-    res.status(400).json({
-      message: "Invalid reminder ID format",
-      status: 400,
-      ok: false,
-    });
+    const msg = "Invalid reminder ID format";
+    sendError(res, 400, {
+      code: ErrorCode.VALIDATION_ERROR,
+      details: [{ field: "reminder_id", message: msg }],
+    }, msg);
     return;
   }
 
@@ -45,18 +50,10 @@ async function verifyReminder(
     next();
   } catch (error) {
     if (error instanceof ServerError) {
-      res.status(error.status).json({
-        message: error.message,
-        status: error.status,
-        ok: false,
-      });
+      sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
       return;
     }
-    res.status(500).json({
-      message: "Internal server error",
-      status: 500,
-      ok: false,
-    });
+    sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
   }
 }
 

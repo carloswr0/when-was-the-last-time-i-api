@@ -1,6 +1,9 @@
 import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import type { NextFunction, Request, Response } from "express";
+import { ErrorCode } from "../constants/error-codes.ts";
 import ENVIRONTMENT from "../config/environment.config.ts";
+import { internalErrorBody } from "../helpers/error.helper.ts";
+import { sendError } from "../helpers/response.helper.ts";
 
 function authMiddleware(
   req: Request,
@@ -10,7 +13,7 @@ function authMiddleware(
   try {
     const secret = ENVIRONTMENT.JWT_SECRET_KEY;
     if (!secret) {
-      res.status(500).json({ message: "Internal server error" });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
       return;
     }
 
@@ -19,7 +22,11 @@ function authMiddleware(
     const token = bearer?.split(" ")[1]; // Bearer <token>
 
     if (!token) {
-      res.status(401).json({ message: "No token provided" });
+      const msg = "No token provided";
+      sendError(res, 401, {
+        code: ErrorCode.UNAUTHORIZED,
+        details: [{ field: "authorization", message: msg }],
+      }, msg);
       return;
     }
 
@@ -28,11 +35,19 @@ function authMiddleware(
       secret,
       (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
         if (err) {
-          res.status(403).json({ message: "Invalid token" });
+          const msg = "Invalid token";
+          sendError(res, 403, {
+            code: ErrorCode.TOKEN_INVALID,
+            details: [{ field: "authorization", message: msg }],
+          }, msg);
           return;
         }
         if (typeof decoded === "string" || decoded === undefined) {
-          res.status(403).json({ message: "Invalid token" });
+          const msg = "Invalid token";
+          sendError(res, 403, {
+            code: ErrorCode.TOKEN_INVALID,
+            details: [{ field: "authorization", message: msg }],
+          }, msg);
           return;
         }
         (req as Request & { user: JwtPayload }).user = decoded;
@@ -40,7 +55,8 @@ function authMiddleware(
       },
     );
   } catch {
-    res.status(500).json({ message: "Internal server error" });
+    const msg = "Internal server error"
+    sendError(res, 500, internalErrorBody(msg), msg);
   }
 }
 

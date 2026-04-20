@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import type { JwtPayload } from "jsonwebtoken";
 import cors from "cors";
 import ENVIRONTMENT from "./config/environment.config.ts";
+import { sendSuccess } from "./helpers/response.helper.ts";
 import connectToMongoDB from "./config/mongodb.config.ts";
 import healthRouter from "./routers/health.router.ts";
 import authRouter from "./routers/auth.router.ts";
@@ -25,9 +26,12 @@ app.use(
 
 app.use("/api/test", authMiddleware, (req: Request, res: Response) => {
   const { user } = req as Request & { user?: JwtPayload };
-  res.json({
-    message: `Test endpoint is working! ${user?.name ?? "Guest"}`,
-  });
+  sendSuccess(
+    res,
+    200,
+    null,
+    `Auth token is valid and active, also the test endpoint is working! ${user?.name ?? "Guest"}`,
+  );
 });
 
 app.listen(ENVIRONTMENT.PORT, () => {

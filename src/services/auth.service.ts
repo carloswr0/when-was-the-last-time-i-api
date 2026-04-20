@@ -6,9 +6,15 @@ import { userRepository } from "../repositories/user.repository.ts";
 import mailerTransporter from "../config/mailer.config.ts";
 import ENVIRONTMENT from "../config/environment.config.ts";
 
-/** `toObject()` includes `_id`; `InferSchemaType` does not list it on plain objects. */
+/** Plain user objects from `toObject()` expose `id` (see `applyApiSerialization`). */
 function userDocumentId(user: UserType): string {
-  return String((user as UserType & { _id: unknown })._id);
+  const u = user as UserType & { id?: unknown; _id?: unknown };
+  if (u.id != null) return String(u.id);
+  if (u._id != null) return String(u._id);
+  throw new ServerError({
+    message: "User document has no id",
+    status: 500,
+  });
 }
 
 function jwtSecret(): string {
@@ -84,7 +90,7 @@ class AuthService {
     }
 
     if (!user.isVerified) {
-      throw new ServerError({ message: "Email not verified", status: 401 });
+      throw new ServerError({ message: "Email not verified, please confirm your registration by clicking the link in your email inbox", status: 401 });
     }
 
     const isSamePassword = await bcrypt.compare(password, storedHash);

@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import ServerError from "../helpers/error.helper.ts";
+import ServerError, {
+  apiErrorBodyFromServerError,
+  internalErrorBody,
+} from "../helpers/error.helper.ts";
+import { sendError, sendSuccess } from "../helpers/response.helper.ts";
 import { serverErrorMessage } from "../helpers/serverErrorMessage.helper.ts";
 import authService, {
   type LoginInput,
@@ -14,26 +18,13 @@ class AuthController {
     try {
       const { name, email, password } = req.body as RegisterInput;
       await authService.register({ name, email, password });
-      res.status(201).json({
-        message:
-          "User registered successfully. Please check your email to verify your account.",
-        status: 201,
-        ok: true,
-      });
+      sendSuccess(res, 201, null, "User registered successfully. Please check your email to verify your account.");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
 
@@ -42,28 +33,13 @@ class AuthController {
       const { email, password } = req.body as LoginInput;
       const auth_token = await authService.login({ email, password });
 
-      res.status(200).json({
-        message: "Login successful",
-        status: 200,
-        ok: true,
-        data: {
-          auth_token,
-        },
-      });
+      sendSuccess(res, 200, { auth_token }, "Login successful");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: serverErrorMessage(error),
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody(serverErrorMessage(error)), serverErrorMessage(error));
     }
   }
 
@@ -79,25 +55,13 @@ class AuthController {
           : { verify_email_token },
       );
 
-      res.status(200).json({
-        message: "Email verified successfully",
-        status: 200,
-        ok: true,
-      });
+      sendSuccess(res, 200, null, "Email verified successfully");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: serverErrorMessage(error),
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody(serverErrorMessage(error)), serverErrorMessage(error));
     }
   }
 
@@ -105,26 +69,18 @@ class AuthController {
     try {
       const { email } = req.body as ResetPasswordRequestInput;
       await authService.resetPasswordRequest({ email });
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message:
-          "A mail has been sent to your email address with instructions to reset your password",
-      });
+      sendSuccess(
+        res,
+        200,
+        null,
+        "A mail has been sent to your email address with instructions to reset your password",
+      );
     } catch (error: unknown) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          ok: false,
-          status: error.status,
-          message: error.message,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        ok: false,
-        status: 500,
-        message: "Error requesting password reset",
-      });
+      sendError(res, 500, internalErrorBody("Error requesting password reset"), "Error requesting password reset");
     }
   }
 
@@ -137,25 +93,13 @@ class AuthController {
       const { password } = req.body as Pick<ResetPasswordInput, "password">;
 
       await authService.resetPassword({ reset_password_token, password });
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "Password reset successfully ",
-      });
+      sendSuccess(res, 200, null, "Password reset successfully ");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          ok: false,
-          status: error.status,
-          message: error.message,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        ok: false,
-        status: 500,
-        message: "Error resetting password",
-      });
+      sendError(res, 500, internalErrorBody("Error resetting password"), "Error resetting password");
     }
   }
 }

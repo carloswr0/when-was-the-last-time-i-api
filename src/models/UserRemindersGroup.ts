@@ -1,6 +1,7 @@
 import mongoose, { type Model } from "mongoose";
 
 import { userRemindersGroupRoles } from "../constants/index.ts";
+import { applyApiSerialization } from "./mongoose-serialization.ts";
 
 const userRemindersGroupSchema = new mongoose.Schema(
   {
@@ -27,8 +28,11 @@ const userRemindersGroupSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
+
+applyApiSerialization(userRemindersGroupSchema);
 
 userRemindersGroupSchema.index({ user: 1, remindersGroup: 1 }, { unique: true });
 

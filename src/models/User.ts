@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import mongoose, { type Model } from "mongoose";
 
+import { applyApiSerialization } from "./mongoose-serialization.ts";
+
 const SALT_ROUNDS = 10;
 
 const userSchema = new mongoose.Schema(
@@ -42,22 +44,11 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
-userSchema.set("toJSON", {
-  virtuals: true,
-  transform(_doc, ret) {
-    const { password: _password, __v: _v, ...safe } = ret as {
-      password?: string;
-      __v?: number;
-      [key: string]: unknown;
-    };
-    return safe;
-  },
-});
-
-userSchema.set("toObject", { virtuals: true });
+applyApiSerialization(userSchema, { omitFromJSON: ["password"] });
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;

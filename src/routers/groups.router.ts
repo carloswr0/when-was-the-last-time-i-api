@@ -10,7 +10,7 @@ const groupsController = new GroupsController();
 groupsRouter.use(authMiddleware);
 groupsRouter.post("/", groupsController.createGroup);
 groupsRouter.get("/get-user-groups", groupsController.getGroup);
-groupsRouter.get("/:workspace_id", verifyRolePermissionAndBelonging([]), groupsController.getGroupDetails);
-groupsRouter.use("/:workspace_id/channel", reminderRouter);
+groupsRouter.get("/:group_id", verifyRolePermissionAndBelonging([]), groupsController.getGroupDetails);
+groupsRouter.use("/:group_id/reminder", reminderRouter);
 
 export default groupsRouter;

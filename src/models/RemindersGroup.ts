@@ -1,6 +1,7 @@
 import mongoose, { type Model } from "mongoose";
 
 import { remindersGroupTypes } from "../constants/index.ts";
+import { applyApiSerialization } from "./mongoose-serialization.ts";
 
 const remindersGroupSchema = new mongoose.Schema(
   {
@@ -9,6 +10,12 @@ const remindersGroupSchema = new mongoose.Schema(
       required: [true, "Title is required"],
       trim: true,
       maxlength: [200, "Title cannot exceed 200 characters"],
+    },
+    description: {
+      type: String,
+      required: false,
+      trim: true,
+      maxlength: [500, "Title cannot exceed 500 characters"],
     },
     type: {
       type: String,
@@ -21,8 +28,11 @@ const remindersGroupSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
+
+applyApiSerialization(remindersGroupSchema);
 
 export type RemindersGroupType = mongoose.InferSchemaType<
   typeof remindersGroupSchema

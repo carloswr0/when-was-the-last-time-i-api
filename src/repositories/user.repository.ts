@@ -53,10 +53,10 @@ class UserRepository {
   }
 
   /** Minimal read to verify the users collection / DB responds. */
-  async getOneUserToCheckDBHealth(): Promise<{ _id: string } | null> {
+  async getOneUserToCheckDBHealth(): Promise<{ id: string } | null> {
     const doc = await this.userModel.findOne().select("_id").lean();
     if (!doc) return null;
-    return { _id: String(doc._id) };
+    return { id: String(doc._id) };
   }
 }
 

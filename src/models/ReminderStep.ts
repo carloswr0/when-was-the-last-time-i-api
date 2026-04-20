@@ -1,6 +1,7 @@
 import mongoose, { type Model } from "mongoose";
 
 import { reminderTypes } from "../constants/index.ts";
+import { applyApiSerialization } from "./mongoose-serialization.ts";
 
 const reminderStepSchema = new mongoose.Schema(
   {
@@ -51,8 +52,11 @@ const reminderStepSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
+
+applyApiSerialization(reminderStepSchema);
 
 export type ReminderStepType = mongoose.InferSchemaType<
   typeof reminderStepSchema

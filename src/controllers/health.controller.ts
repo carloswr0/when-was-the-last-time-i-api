@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { ErrorCode } from "../constants/error-codes.ts";
+import { sendError, sendSuccess } from "../helpers/response.helper.ts";
 import { userRepository } from "../repositories/user.repository.ts";
 
 function errorMessage(error: unknown): string {
@@ -7,29 +9,30 @@ function errorMessage(error: unknown): string {
 
 class HealthController {
   getApiHealth(_req: Request, res: Response): void {
-    res.status(200).json({
-      message: "API is healthy",
-      status: 200,
-      ok: true,
-    });
+    sendSuccess(res, 200, null, "API is healthy.");
   }
 
   async getDbHealth(_req: Request, res: Response): Promise<void> {
     try {
       const user = await userRepository.getOneUserToCheckDBHealth();
-      res.status(200).json({
-        message: "Database is healthy",
-        status: 200,
-        ok: true,
-        user: user,
-      });
+      sendSuccess(
+        res,
+        200,
+        null,
+        "Database is healthy.",
+      );
     } catch (error: unknown) {
-      res.status(500).json({
-        message: "Database is not healthy",
-        status: 500,
-        ok: false,
-        error: errorMessage(error),
-      });
+      const errText = errorMessage(error);
+      sendError(
+        res,
+        500,
+        {
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+          details: [{ field: "database", message: errText }],
+        },
+        "Database is not healthy.",
+        { error: errText },
+      );
     }
   }
 }

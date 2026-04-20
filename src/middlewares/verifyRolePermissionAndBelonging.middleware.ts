@@ -1,7 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import type { JwtPayload } from "jsonwebtoken";
 import { userRemindersGroupRoles } from "../constants/index.ts";
-import ServerError from "../helpers/error.helper.ts";
+import ServerError, {
+  apiErrorBodyFromServerError,
+  internalErrorBody,
+} from "../helpers/error.helper.ts";
+import { sendError } from "../helpers/response.helper.ts";
 import type { UserRemindersGroupType } from "../models/UserRemindersGroup.ts";
 import { userRemindersGroupRepository } from "../repositories/user-reminders-group.repository.ts";
 
@@ -43,7 +47,7 @@ function verifyRolePermissionAndBelonging(
         });
       }
 
-      const groupId = groupParamId(req.params.workspace_id);
+      const groupId = groupParamId(req.params.group_id);
       if (!groupId) {
         throw new ServerError({
           status: 403,
@@ -62,7 +66,7 @@ function verifyRolePermissionAndBelonging(
         throw new ServerError({
           status: 403,
           message:
-            "Usuario no pertenece al workspace o no tiene permisos para acceder",
+            "User does not belong to this group or does not have permissions",
           ok: false,
         });
       }
@@ -81,18 +85,11 @@ function verifyRolePermissionAndBelonging(
       next();
     } catch (error) {
       if (error instanceof ServerError) {
-        res.status(error.status || 500).json({
-          message: error.message,
-          status: error.status || 500,
-          ok: false,
-        });
+        const status = error.status || 500;
+        sendError(res, status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   };
 }

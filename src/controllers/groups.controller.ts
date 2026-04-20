@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
+import { ErrorCode } from "../constants/error-codes.ts";
 import { remindersGroupTypes } from "../constants/index.ts";
-import ServerError from "../helpers/error.helper.ts";
+import ServerError, {
+  apiErrorBodyFromServerError,
+  internalErrorBody,
+} from "../helpers/error.helper.ts";
+import { sendError, sendSuccess } from "../helpers/response.helper.ts";
 import { serverErrorMessage } from "../helpers/serverErrorMessage.helper.ts";
 import { remindersGroupRepository } from "../repositories/reminders-group.repository.ts";
 import { userRemindersGroupRepository } from "../repositories/user-reminders-group.repository.ts";
@@ -29,47 +34,45 @@ function getAuthUserId(req: Request): string | undefined {
 class GroupsController {
   async createGroup(req: Request, res: Response): Promise<void> {
     try {
-      const { title, type } = req.body as { title?: unknown; type?: unknown };
+      const { title, description, type } = req.body as { title: string; type: string, description?: string, };
       const userId = getAuthUserId(req);
 
       if (!userId) {
-        res.status(401).json({
-          message: "Unauthorized: user not authenticated",
-          status: 401,
-          ok: false,
-        });
+        const msg = "Unauthorized: user not authenticated";
+        sendError(res, 401, {
+          code: ErrorCode.UNAUTHORIZED,
+          details: [{ field: "authorization", message: msg }],
+        }, msg);
         return;
       }
 
       if (typeof title !== "string" || !title.trim()) {
-        res.status(400).json({
-          message: "Title is required",
-          status: 400,
-          ok: false,
-        });
+        const msg = "Title is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "title", message: msg }],
+        }, msg);
         return;
       }
 
       if (!isRemindersGroupType(type)) {
-        res.status(400).json({
-          message: `type must be one of: ${remindersGroupTypes.join(", ")}`,
-          status: 400,
-          ok: false,
-        });
+        const msg = `type must be one of: ${remindersGroupTypes.join(", ")}`;
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "type", message: msg }],
+        }, msg);
         return;
       }
 
       const createdGroup = await remindersGroupRepository.create({
         title: title.trim(),
         type,
+        ...(description !== undefined ? { description } : {}),
       });
 
       if (!createdGroup) {
-        res.status(500).json({
-          message: "Failed to create reminders group",
-          status: 500,
-          ok: false,
-        });
+        const msg = "Failed to create reminders group"
+        sendError(res, 500, internalErrorBody(msg), msg);
         return;
       }
 
@@ -84,11 +87,8 @@ class GroupsController {
             ? String(created._id)
             : "";
       if (!groupId) {
-        res.status(500).json({
-          message: "Created group has no id",
-          status: 500,
-          ok: false,
-        });
+        const msg = "Created group has no id"
+        sendError(res, 500, internalErrorBody(msg), msg);
         return;
       }
 
@@ -98,26 +98,14 @@ class GroupsController {
         role: "owner",
       });
 
-      res.status(201).json({
-        message: "success",
-        status: 201,
-        ok: true,
-        data: createdGroup,
-      });
+      sendSuccess(res, 201, createdGroup, "success");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
-        res.status(error.status).json({
-          message: error.message,
-          status: error.status,
-          ok: false,
-        });
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
         return;
       }
-      res.status(500).json({
-        message: "Internal server error",
-        status: 500,
-        ok: false,
-      });
+      const msg = "Internal server error"
+      sendError(res, 500, internalErrorBody(msg), msg);
     }
   }
 
@@ -125,64 +113,53 @@ class GroupsController {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
-        res.status(401).json({
-          message: "Unauthorized: user not authenticated",
-          status: 401,
-          ok: false,
-        });
+        const msg = "Unauthorized: user not authenticated";
+        sendError(res, 401, {
+          code: ErrorCode.UNAUTHORIZED,
+          details: [{ field: "authorization", message: msg }],
+        }, msg);
         return;
       }
 
-      const workspaces =
+      const groups =
         await userRemindersGroupRepository.findByUserId(userId);
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "success",
-        data: workspaces,
-      });
+      sendSuccess(res, 200, groups, "success");
     } catch (error: unknown) {
-      res.status(500).json({
-        message: serverErrorMessage(error),
-        status: 500,
-        ok: false,
-      });
+      const detail = serverErrorMessage(error);
+      sendError(res, 500, internalErrorBody(detail), detail);
     }
   }
 
   async getGroupDetails(req: Request, res: Response): Promise<void> {
     try {
-      const { workspace_id: workspaceId } = req.params as {
-        workspace_id: string;
+      const { group_id } = req.params as {
+        group_id: string;
       };
 
-      const workspaceMembers =
-        await userRemindersGroupRepository.findByRemindersGroupId(workspaceId);
+      const groupMembers =
+        await userRemindersGroupRepository.findByRemindersGroupId(group_id);
 
-      const workspaceDetails =
-        await remindersGroupRepository.findById(workspaceId);
+      const groupDetails =
+        await remindersGroupRepository.findById(group_id);
 
-      if (!workspaceDetails) {
-        res.status(404).json({
-          message: "Workspace not found",
-          status: 404,
-          ok: false,
-        });
+      if (!groupDetails) {
+        const msg = "Reminder group was not found"
+        sendError(res, 404, {
+          code: ErrorCode.NOT_FOUND,
+          details: [{ field: "group_id", message: msg }],
+        }, msg);
         return;
       }
 
-      res.status(200).json({
-        ok: true,
-        status: 200,
-        message: "success",
-        data: { workspaceDetails, workspaceMembers },
-      });
+      sendSuccess(
+        res,
+        200,
+        { groupDetails, groupMembers },
+        "success",
+      );
     } catch (error: unknown) {
-      res.status(500).json({
-        message: serverErrorMessage(error),
-        status: 500,
-        ok: false,
-      });
+      const detail = serverErrorMessage(error);
+      sendError(res, 500, internalErrorBody(detail), detail);
     }
   }
 }

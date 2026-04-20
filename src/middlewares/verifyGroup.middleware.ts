@@ -1,6 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { isValidObjectId } from "mongoose";
-import ServerError from "../helpers/error.helper.ts";
+import { ErrorCode } from "../constants/error-codes.ts";
+import ServerError, {
+  apiErrorBodyFromServerError,
+  internalErrorBody,
+} from "../helpers/error.helper.ts";
+import { sendError } from "../helpers/response.helper.ts";
 import type { RemindersGroupType } from "../models/RemindersGroup.ts";
 import { remindersGroupRepository } from "../repositories/reminders-group.repository.ts";
 
@@ -19,52 +24,44 @@ async function verifyGroup(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const groupId = groupParamId(req.params.workspace_id);
+  const groupId = groupParamId(req.params.group_id);
 
   if (!groupId) {
-    res.status(400).json({
-      message: "Group ID is required",
-      status: 400,
-      ok: false,
-    });
+    const msg = "Group ID is required";
+    sendError(res, 400, {
+      code: ErrorCode.VALIDATION_ERROR,
+      details: [{ field: "group_id", message: msg }],
+    }, msg);
     return;
   }
 
   if (!isValidObjectId(groupId)) {
-    res.status(400).json({
-      message: "Invalid Group ID format",
-      status: 400,
-      ok: false,
-    });
+    const msg = "Invalid Group ID format";
+    sendError(res, 400, {
+      code: ErrorCode.VALIDATION_ERROR,
+      details: [{ field: "group_id", message: msg }],
+    }, msg);
     return;
   }
 
   try {
     const group = await remindersGroupRepository.findById(groupId);
     if (!group) {
-      res.status(404).json({
-        message: "Group not found",
-        status: 404,
-        ok: false,
-      });
+      const msg = "Group not found";
+      sendError(res, 404, {
+        code: ErrorCode.NOT_FOUND,
+        details: [{ field: "group_id", message: msg }],
+      }, msg);
       return;
     }
     (req as RequestWithGroup).group = group;
     next();
   } catch (error) {
     if (error instanceof ServerError) {
-      res.status(error.status).json({
-        message: error.message,
-        status: error.status,
-        ok: false,
-      });
+      sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
       return;
     }
-    res.status(500).json({
-      message: "Internal server error",
-      status: 500,
-      ok: false,
-    });
+    sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
   }
 }
 
