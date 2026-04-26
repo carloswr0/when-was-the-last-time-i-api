@@ -25,6 +25,18 @@ class ReminderRepository {
     return docs.map((d) => d.toObject() as unknown as ReminderType);
   }
 
+  async findByRemindersGroupIds(
+    remindersGroupIds: string[],
+  ): Promise<ReminderType[]> {
+    if (remindersGroupIds.length === 0) {
+      return [];
+    }
+    const docs = await this.reminderModel.find({
+      remindersGroup: { $in: remindersGroupIds },
+    });
+    return docs.map((d) => d.toObject() as unknown as ReminderType);
+  }
+
   async update(
     id: string,
     update: UpdateQuery<ReminderType>
@@ -38,6 +50,21 @@ class ReminderRepository {
 
   async delete(id: string): Promise<ReminderType | null> {
     const doc = await this.reminderModel.findByIdAndDelete(id);
+    return doc?.toObject() as unknown as ReminderType | null;
+  }
+
+  async markAsDone(
+    id: string,
+    lastUpdatedBy: string,
+    lastUpdatedAt: string,
+  ): Promise<ReminderType | null> {
+    const doc = await this.reminderModel.findByIdAndUpdate(id, {
+      lastUpdatedBy: lastUpdatedBy,
+      lastUpdatedAt: lastUpdatedAt
+    }, {
+      new: true,
+      runValidators: true,
+    });
     return doc?.toObject() as unknown as ReminderType | null;
   }
 }

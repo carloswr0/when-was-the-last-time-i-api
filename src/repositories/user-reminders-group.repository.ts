@@ -39,7 +39,6 @@ class UserRemindersGroupRepository {
     const docs = await this.userRemindersGroupModel
       .find({ user: userId })
       .populate("remindersGroup");
-      console.log(docs)
     return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
   }
 

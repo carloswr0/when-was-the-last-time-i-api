@@ -34,13 +34,13 @@ const reminderSchema = new mongoose.Schema(
         message: "{VALUE} is not a valid reminder type",
       },
     },
-    lastTimeSomeoneDidThis: {
+    lastUpdatedAt: {
       type: Date,
       default: null,
     },
-    lastPersonWhoDidThis: {
+    lastUpdatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "UserRemindersGroup",
+      ref: "User",
       default: null,
     },
     frequency: {
@@ -49,12 +49,17 @@ const reminderSchema = new mongoose.Schema(
     },
     pushNotificationsEnabled: {
       type: Boolean,
-      required: true,
       default: false,
-    }
+    },
+    remindersGroup: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RemindersGroup",
+      default: null,
+      index: true,
+    },
   },
   {
-    timestamps: true,
+    timestamps: false,
     versionKey: false,
   }
 );

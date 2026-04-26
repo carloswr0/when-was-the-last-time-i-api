@@ -18,11 +18,7 @@ app.use(express.json());
 
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
-app.use(
-  "/api/groups",
-  authMiddleware,
-  groupsRouter,
-);
+app.use("/api/groups", authMiddleware, groupsRouter);
 
 app.use("/api/test", authMiddleware, (req: Request, res: Response) => {
   const { user } = req as Request & { user?: JwtPayload };

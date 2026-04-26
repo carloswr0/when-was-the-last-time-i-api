@@ -40,18 +40,18 @@ const reminderStepSchema = new mongoose.Schema(
         message: "{VALUE} is not a valid reminderstep type",
       },
     },
-    lastTimeSomeoneDidThis: {
+    lastUpdatedAt: {
       type: Date,
       default: null,
     },
-    lastPersonWhoDidThis: {
+    lastUpdatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "UserRemindersGroup",
+      ref: "User",
       default: null,
     },
   },
   {
-    timestamps: true,
+    timestamps: false,
     versionKey: false,
   }
 );

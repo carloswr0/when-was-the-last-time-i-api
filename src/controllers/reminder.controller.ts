@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { isValidObjectId } from "mongoose";
 import { ErrorCode } from "../constants/error-codes.ts";
 import { reminderTypes } from "../constants/index.ts";
 import ServerError, {
@@ -34,13 +35,27 @@ class ReminderController {
         description,
         icon,
         bannerImage,
+        frequency,
+        remindersGroup,
       } = req.body as {
-        title?: unknown;
-        type?: unknown;
-        description?: unknown;
-        icon?: unknown;
-        bannerImage?: unknown;
+        title?: string;
+        type?: string;
+        description?: string;
+        icon?: string;
+        bannerImage?: string;
+        frequency: number;
+        remindersGroup: string;
       };
+      const groupId = routeParamId(req.params.group_id);
+
+      if (!groupId) {
+        const msg = "Reminders group id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "groupId", message: msg }],
+        }, msg);
+        return;
+      }
 
       if (typeof title !== "string" || !title.trim()) {
         const msg = "Title is required";
@@ -63,6 +78,8 @@ class ReminderController {
       const reminder = await reminderService.createReminder({
         title,
         type,
+        frequency,
+        remindersGroup: groupId,
         description:
           typeof description === "string" || description === null
             ? description
@@ -87,6 +104,38 @@ class ReminderController {
   async getAllReminders(_req: Request, res: Response): Promise<void> {
     try {
       const reminders = await reminderService.getAllReminders();
+      sendSuccess(res, 200, { reminders }, "Reminders retrieved successfully");
+    } catch (error) {
+      if (error instanceof ServerError) {
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
+        return;
+      }
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
+    }
+  }
+
+  async getRemindersByUserId(req: Request, res: Response): Promise<void> {
+    console.log("asd")
+    try {
+      const userId = routeParamId(req.params.user_id);
+      if (!userId) {
+        const msg = "user_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "user_id", message: msg }],
+        }, msg);
+        return;
+      }
+      if (!isValidObjectId(userId)) {
+        const msg = "Invalid user ID format";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "user_id", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const reminders = await reminderService.getRemindersByUserId(userId);
       sendSuccess(res, 200, { reminders }, "Reminders retrieved successfully");
     } catch (error) {
       if (error instanceof ServerError) {
@@ -212,6 +261,65 @@ class ReminderController {
     }
   }
 
+  async completeReminder(req: Request, res: Response): Promise<void> {
+    try {
+      const reminderId = routeParamId(req.params.reminder_id);
+      if (!reminderId) {
+        const msg = "reminder_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "reminder_id", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const {
+        lastUpdatedBy,
+        lastUpdatedAt,
+      } = req.body as {
+        lastUpdatedBy?: unknown;
+        lastUpdatedAt?: unknown;
+      };
+
+      if (
+        typeof lastUpdatedBy !== "string" ||
+        !lastUpdatedBy.trim()
+      ) {
+        const msg = "lastUpdatedBy is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "lastUpdatedBy", message: msg }],
+        }, msg);
+        return;
+      }
+
+      if (
+        typeof lastUpdatedAt !== "string" ||
+        !lastUpdatedAt.trim()
+      ) {
+        const msg = "lastUpdatedAt is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "lastUpdatedAt", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const reminder = await reminderService.markReminderAsDone(
+        reminderId,
+        lastUpdatedBy.trim(),
+        lastUpdatedAt.trim(),
+      );
+      sendSuccess(res, 200, { reminder }, "Reminder marked as done successfully");
+    } catch (error) {
+      if (error instanceof ServerError) {
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
+        return;
+      }
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
+    }
+  }
+
   async deleteReminder(req: Request, res: Response): Promise<void> {
     try {
       const reminderId = routeParamId(req.params.reminder_id);
@@ -233,6 +341,7 @@ class ReminderController {
       sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
     }
   }
+
 }
 
 const reminderController = new ReminderController();
