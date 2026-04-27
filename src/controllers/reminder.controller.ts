@@ -314,7 +314,30 @@ class ReminderController {
         return;
       }
 
-      const lastUpdatedAt = Date.now();
+      const { lastUpdateAt } = req.body as { lastUpdateAt?: unknown };
+      let lastUpdatedAt: number;
+      if (lastUpdateAt !== undefined && lastUpdateAt !== null) {
+        if (typeof lastUpdateAt !== "string") {
+          const msg = "lastUpdateAt must be an ISO 8601 date string";
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "lastUpdateAt", message: msg }],
+          }, msg);
+          return;
+        }
+        const parsed = Date.parse(lastUpdateAt);
+        if (Number.isNaN(parsed)) {
+          const msg = "lastUpdateAt must be a valid date";
+          sendError(res, 400, {
+            code: ErrorCode.VALIDATION_ERROR,
+            details: [{ field: "lastUpdateAt", message: msg }],
+          }, msg);
+          return;
+        }
+        lastUpdatedAt = parsed;
+      } else {
+        lastUpdatedAt = Date.now();
+      }
 
       const reminder = await reminderService.markReminderAsDone(
         reminderId,
