@@ -303,7 +303,7 @@ class ReminderController {
         }, msg);
         return;
       }
-
+     
       const lastUpdatedBy = getAuthUserId(req);
       if (!lastUpdatedBy) {
         const msg = "Unauthorized: user not authenticated";
@@ -313,8 +313,8 @@ class ReminderController {
         }, msg);
         return;
       }
-
-      const { lastUpdateAt } = req.body as { lastUpdateAt?: unknown };
+     
+      const lastUpdateAt = req.body?.lastUpdateAt;
       let lastUpdatedAt: number;
       if (lastUpdateAt !== undefined && lastUpdateAt !== null) {
         if (typeof lastUpdateAt !== "string") {
