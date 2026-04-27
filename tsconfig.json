@@ -21,6 +21,6 @@
     "allowImportingTsExtensions": true,
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "api/**/*.ts"],
+  "include": ["src/**/*.ts", "vercel-entry.ts"],
   "exclude": ["node_modules"]
 }
