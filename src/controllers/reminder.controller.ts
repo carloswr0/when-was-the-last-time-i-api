@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { isValidObjectId } from "mongoose";
 import { ErrorCode } from "../constants/error-codes.ts";
 import { reminderTypes } from "../constants/index.ts";
+import { getAuthUserId } from "../helpers/authUser.helper.ts";
 import ServerError, {
   apiErrorBodyFromServerError,
   internalErrorBody,
@@ -146,7 +147,6 @@ class ReminderController {
   }
 
   async getRemindersByUserId(req: Request, res: Response): Promise<void> {
-    console.log("asd")
     try {
       const userId = routeParamId(req.params.user_id);
       if (!userId) {
@@ -304,42 +304,22 @@ class ReminderController {
         return;
       }
 
-      const {
-        lastUpdatedBy,
-        lastUpdatedAt,
-      } = req.body as {
-        lastUpdatedBy?: unknown;
-        lastUpdatedAt?: unknown;
-      };
-
-      if (
-        typeof lastUpdatedBy !== "string" ||
-        !lastUpdatedBy.trim()
-      ) {
-        const msg = "lastUpdatedBy is required";
-        sendError(res, 400, {
-          code: ErrorCode.VALIDATION_ERROR,
-          details: [{ field: "lastUpdatedBy", message: msg }],
+      const lastUpdatedBy = getAuthUserId(req);
+      if (!lastUpdatedBy) {
+        const msg = "Unauthorized: user not authenticated";
+        sendError(res, 401, {
+          code: ErrorCode.UNAUTHORIZED,
+          details: [{ field: "authorization", message: msg }],
         }, msg);
         return;
       }
 
-      if (
-        typeof lastUpdatedAt !== "string" ||
-        !lastUpdatedAt.trim()
-      ) {
-        const msg = "lastUpdatedAt is required";
-        sendError(res, 400, {
-          code: ErrorCode.VALIDATION_ERROR,
-          details: [{ field: "lastUpdatedAt", message: msg }],
-        }, msg);
-        return;
-      }
+      const lastUpdatedAt = Date.now();
 
       const reminder = await reminderService.markReminderAsDone(
         reminderId,
-        lastUpdatedBy.trim(),
-        lastUpdatedAt.trim(),
+        lastUpdatedBy,
+        lastUpdatedAt,
       );
       sendSuccess(res, 200, { reminder }, "Reminder marked as done successfully");
     } catch (error) {

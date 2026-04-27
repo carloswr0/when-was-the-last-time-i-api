@@ -139,7 +139,7 @@ class ReminderService {
   async markReminderAsDone(
     id: string,
     lastUpdatedBy: string,
-    lastUpdatedAt: string,
+    lastUpdatedAt: number,
   ): Promise<ReminderType> {
     if (!id) {
       throw new ServerError({

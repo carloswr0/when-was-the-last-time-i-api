@@ -1,21 +1,11 @@
 import type { Request, Response } from "express";
 import { ErrorCode } from "../constants/error-codes.ts";
+import { getAuthUserId } from "../helpers/authUser.helper.ts";
 import { internalErrorBody } from "../helpers/error.helper.ts";
 import { sendError, sendSuccess } from "../helpers/response.helper.ts";
 import { serverErrorMessage } from "../helpers/serverErrorMessage.helper.ts";
 import { reminderRepository } from "../repositories/reminder.repository.ts";
 import { userRemindersGroupRepository } from "../repositories/user-reminders-group.repository.ts";
-
-function getAuthUserId(req: Request): string | undefined {
-  const raw = (req as Request & { user?: unknown }).user as
-    | { id?: string; _id?: unknown; _doc?: { id?: string; _id?: unknown } }
-    | undefined;
-  if (!raw) return undefined;
-  const u = raw._doc ?? raw;
-  if (typeof u.id === "string") return u.id;
-  if (u._id != null) return String(u._id);
-  return undefined;
-}
 
 function remindersGroupIdFromMembership(
   m: { remindersGroup?: unknown },

@@ -8,6 +8,10 @@ reminderRouter.get(
   "/",
   reminderController.getRemindersByGroupId.bind(reminderController),
 );
+reminderRouter.post(
+  "/:reminder_id/complete",
+  reminderController.completeReminder.bind(reminderController),
+);
 reminderRouter.get(
   "/:reminder_id",
   reminderController.getById.bind(reminderController),

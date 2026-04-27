@@ -56,11 +56,11 @@ class ReminderRepository {
   async markAsDone(
     id: string,
     lastUpdatedBy: string,
-    lastUpdatedAt: string,
+    lastUpdatedAt: number,
   ): Promise<ReminderType | null> {
     const doc = await this.reminderModel.findByIdAndUpdate(id, {
       lastUpdatedBy: lastUpdatedBy,
-      lastUpdatedAt: lastUpdatedAt
+      lastUpdatedAt: lastUpdatedAt,
     }, {
       new: true,
       runValidators: true,

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import type { JwtPayload } from "jsonwebtoken";
 import { userRemindersGroupRoles } from "../constants/index.ts";
+import { getAuthUserId } from "../helpers/authUser.helper.ts";
 import ServerError, {
   apiErrorBodyFromServerError,
   internalErrorBody,
@@ -12,14 +12,6 @@ import { userRemindersGroupRepository } from "../repositories/user-reminders-gro
 export type RequestWithMembership = Request & {
   membership: UserRemindersGroupType;
 };
-
-type AuthJwtPayload = JwtPayload & { id?: string };
-
-function getAuthUserId(req: Request): string | undefined {
-  const user = (req as Request & { user?: AuthJwtPayload }).user;
-  if (!user || typeof user.id !== "string") return undefined;
-  return user.id;
-}
 
 function groupParamId(
   value: string | string[] | undefined,
