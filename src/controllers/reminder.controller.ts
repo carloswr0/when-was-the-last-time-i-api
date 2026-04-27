@@ -114,6 +114,37 @@ class ReminderController {
     }
   }
 
+  async getRemindersByGroupId(req: Request, res: Response): Promise<void> {
+    try {
+      const groupId = routeParamId(req.params.group_id);
+      if (!groupId) {
+        const msg = "group_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "group_id", message: msg }],
+        }, msg);
+        return;
+      }
+      if (!isValidObjectId(groupId)) {
+        const msg = "Invalid group ID format";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "group_id", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const reminders = await reminderService.getRemindersByGroupId(groupId);
+      sendSuccess(res, 200, { reminders }, "Reminders retrieved successfully");
+    } catch (error) {
+      if (error instanceof ServerError) {
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
+        return;
+      }
+      sendError(res, 500, internalErrorBody("Internal server error"), "Internal server error");
+    }
+  }
+
   async getRemindersByUserId(req: Request, res: Response): Promise<void> {
     console.log("asd")
     try {

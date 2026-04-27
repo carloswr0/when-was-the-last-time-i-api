@@ -73,7 +73,7 @@ class UserController {
       const reminders =
         await reminderRepository.findByRemindersGroupIds(groupIds);
 
-      sendSuccess(res, 200, reminders, "success");
+      sendSuccess(res, 200, {reminders: reminders}, "success");
     } catch (error: unknown) {
       const detail = serverErrorMessage(error);
       sendError(res, 500, internalErrorBody(detail), detail);

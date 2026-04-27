@@ -54,6 +54,17 @@ class ReminderService {
     return reminderRepository.getAll();
   }
 
+  async getRemindersByGroupId(groupId: string): Promise<ReminderType[]> {
+    if (!groupId?.trim()) {
+      throw new ServerError({
+        status: 400,
+        message: "Group ID is required",
+        ok: false,
+      });
+    }
+    return reminderRepository.findByRemindersGroupIds([groupId.trim()]);
+  }
+
   async getRemindersByUserId(userId: string): Promise<ReminderType[]> {
     if (!userId?.trim()) {
       throw new ServerError({

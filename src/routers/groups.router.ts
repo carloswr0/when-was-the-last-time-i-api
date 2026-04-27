@@ -9,6 +9,6 @@ const groupsController = new GroupsController();
 groupsRouter.post("/", groupsController.createGroup);
 groupsRouter.get("/get-user-groups", groupsController.getGroup);
 groupsRouter.get("/:group_id", verifyRolePermissionAndBelonging([]), groupsController.getGroupDetails);
-groupsRouter.use("/:group_id/reminder", reminderRouter);
+groupsRouter.use("/:group_id/reminder", verifyRolePermissionAndBelonging([]), reminderRouter);
 
 export default groupsRouter;

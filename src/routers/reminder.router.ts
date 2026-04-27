@@ -4,7 +4,10 @@ import reminderController from "../controllers/reminder.controller.ts";
 const reminderRouter = express.Router({ mergeParams: true });
 
 reminderRouter.post("/", reminderController.createReminder.bind(reminderController));
-reminderRouter.get("/", reminderController.getAllReminders.bind(reminderController));
+reminderRouter.get(
+  "/",
+  reminderController.getRemindersByGroupId.bind(reminderController),
+);
 reminderRouter.get(
   "/:reminder_id",
   reminderController.getById.bind(reminderController),
