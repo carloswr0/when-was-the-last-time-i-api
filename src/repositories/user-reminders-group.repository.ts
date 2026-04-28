@@ -89,7 +89,7 @@ class UserRemindersGroupRepository {
   /** Membership rows for a user (excluding `invited`), with `remindersGroup` populated. */
   async findByUserId(userId: string): Promise<UserRemindersGroupType[]> {
     const docs = await this.userRemindersGroupModel
-      .find({ user: userId, role: { $ne: "invited" } })
+      .find({ user: userId })
       .populate("remindersGroup");
     return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
   }
