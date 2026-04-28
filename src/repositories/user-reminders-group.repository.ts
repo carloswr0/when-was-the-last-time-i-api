@@ -86,10 +86,18 @@ class UserRemindersGroupRepository {
     return doc?.toObject() as unknown as UserRemindersGroupType | null;
   }
 
-  /** Membership rows for a user, with `remindersGroup` populated. */
+  /** Membership rows for a user (excluding `invited`), with `remindersGroup` populated. */
   async findByUserId(userId: string): Promise<UserRemindersGroupType[]> {
     const docs = await this.userRemindersGroupModel
-      .find({ user: userId })
+      .find({ user: userId, role: { $ne: "invited" } })
+      .populate("remindersGroup");
+    return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
+  }
+
+  /** Pending invitations: membership rows for a user with role `invited`, `remindersGroup` populated. */
+  async findInvitedByUserId(userId: string): Promise<UserRemindersGroupType[]> {
+    const docs = await this.userRemindersGroupModel
+      .find({ user: userId, role: "invited" })
       .populate("remindersGroup");
     return docs.map((d) => d.toObject() as unknown as UserRemindersGroupType);
   }

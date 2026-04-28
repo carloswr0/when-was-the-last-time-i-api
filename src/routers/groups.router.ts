@@ -8,8 +8,9 @@ const groupsController = new GroupsController();
 
 groupsRouter.post("/", groupsController.createGroup);
 groupsRouter.post("/:group_id/invite", verifyRolePermissionAndBelonging(['owner', 'admin']), groupsController.inviteToGroup);
-groupsRouter.put("/:group_id", verifyRolePermissionAndBelonging([]), groupsController.editGroup);
-groupsRouter.get("/get-user-groups", groupsController.getGroup);
+groupsRouter.put("/:group_id", verifyRolePermissionAndBelonging(['owner', 'admin']), groupsController.editGroup);
+groupsRouter.get("/get-user-groups", groupsController.getGroup); // Maybe should remove this route
+groupsRouter.get("/invited", groupsController.getInvitedGroups);
 groupsRouter.get("/:group_id", verifyRolePermissionAndBelonging([]), groupsController.getGroupDetails);
 groupsRouter.use("/:group_id/reminder", verifyRolePermissionAndBelonging([]), reminderRouter);
 

@@ -222,6 +222,27 @@ class GroupsController {
     }
   }
 
+  async getInvitedGroups(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        const msg = "Unauthorized: user not authenticated";
+        sendError(res, 401, {
+          code: ErrorCode.UNAUTHORIZED,
+          details: [{ field: "authorization", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const groups =
+        await userRemindersGroupRepository.findInvitedByUserId(userId);
+      sendSuccess(res, 200, groups, "success");
+    } catch (error: unknown) {
+      const detail = serverErrorMessage(error);
+      sendError(res, 500, internalErrorBody(detail), detail);
+    }
+  }
+
   async getGroupDetails(req: Request, res: Response): Promise<void> {
     try {
       const { group_id } = req.params as {
@@ -374,7 +395,7 @@ class GroupsController {
         await userRemindersGroupRepository.createMemberIfAbsent({
           userId: inviteeId,
           remindersGroupId: gid,
-          role: "member",
+          role: "invited",
         });
 
       if (!inserted) {
