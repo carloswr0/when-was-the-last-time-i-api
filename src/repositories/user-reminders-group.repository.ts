@@ -1,4 +1,5 @@
 import type { UpdateQuery } from "mongoose";
+import { isMongoDuplicateKeyError } from "../helpers/error.helper.ts";
 import {
   UserRemindersGroupModel,
   type UserRemindersGroupType,
@@ -16,6 +17,57 @@ class UserRemindersGroupRepository {
   ): Promise<UserRemindersGroupType | null> {
     const doc = await this.userRemindersGroupModel.create(membership);
     return doc?.toObject() as unknown as UserRemindersGroupType | null;
+  }
+
+  /**
+   * Adds membership for (user, remindersGroup) only if absent — one invite per pair, race-safe.
+   */
+  async createMemberIfAbsent(params: {
+    userId: string;
+    remindersGroupId: string;
+    role: UserRemindersGroupType["role"];
+  }): Promise<{ inserted: boolean; doc: UserRemindersGroupType }> {
+    const { userId, remindersGroupId, role } = params;
+    try {
+      const result = await this.userRemindersGroupModel.updateOne(
+        { user: userId, remindersGroup: remindersGroupId },
+        {
+          $setOnInsert: {
+            user: userId,
+            remindersGroup: remindersGroupId,
+            role,
+          },
+        },
+        { upsert: true }
+      );
+      if (result.upsertedCount === 0) {
+        const doc = await this.findByUserAndRemindersGroupId(
+          userId,
+          remindersGroupId
+        );
+        if (!doc) {
+          throw new Error("Expected membership after updateOne matched");
+        }
+        return { inserted: false, doc };
+      }
+      const insertedId = result.upsertedId;
+      const doc = insertedId
+        ? await this.findById(String(insertedId))
+        : await this.findByUserAndRemindersGroupId(userId, remindersGroupId);
+      if (!doc) {
+        throw new Error("Expected membership after upsert insert");
+      }
+      return { inserted: true, doc };
+    } catch (err: unknown) {
+      if (isMongoDuplicateKeyError(err)) {
+        const doc = await this.findByUserAndRemindersGroupId(
+          userId,
+          remindersGroupId
+        );
+        if (doc) return { inserted: false, doc };
+      }
+      throw err;
+    }
   }
 
   async findById(id: string): Promise<UserRemindersGroupType | null> {

@@ -57,6 +57,16 @@ export function internalErrorBody(detailMessage: string): ApiErrorBody {
   };
 }
 
+/** MongoDB duplicate key (e.g. unique index violation). */
+export function isMongoDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === 11_000
+  );
+}
+
 class ServerError extends Error {
   readonly status: number;
   readonly ok: boolean;

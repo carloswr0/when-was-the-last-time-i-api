@@ -1,7 +1,13 @@
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import ServerError from "../helpers/error.helper.ts";
-import type { UserType } from "../models/User.ts";
+import {
+  USER_NAME_MAX_LENGTH,
+  USER_NAME_MIN_LENGTH,
+  USER_PASSWORD_MIN_LENGTH,
+  USER_PASSWORD_MAX_LENGTH,
+  type UserType,
+} from "../models/User.ts";
 import { userRepository } from "../repositories/user.repository.ts";
 import mailerTransporter from "../config/mailer.config.ts";
 import ENVIRONTMENT from "../config/environment.config.ts";
@@ -54,26 +60,61 @@ export type ResetPasswordInput = {
 
 class AuthService {
   async register({ name, email, password }: RegisterInput) {
-   
-    if (!name || !email || !password) {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedName || !trimmedEmail || !password) {
       throw new ServerError({
         message: "Name, email and password are required",
         status: 400,
       });
     }
-    const emailAlreadyInUse = await userRepository.findByEmail(email);
+
+    if (trimmedName.length > USER_NAME_MAX_LENGTH) {
+      throw new ServerError({
+        message: `Name cannot exceed ${USER_NAME_MAX_LENGTH} characters`,
+        status: 400,
+      });
+    }
+
+    if (trimmedName.length < USER_NAME_MIN_LENGTH) {
+      throw new ServerError({
+        message: `Name must be at least ${USER_NAME_MIN_LENGTH} characters`,
+        status: 400,
+      });
+    }
+
+    if (password.length < USER_PASSWORD_MIN_LENGTH) {
+      throw new ServerError({
+        message: `Password must be at least ${USER_PASSWORD_MIN_LENGTH} characters`,
+        status: 400,
+      });
+    }
+
+    if (password.length > USER_PASSWORD_MAX_LENGTH) {
+      throw new ServerError({
+        message: `Password cannot exceed ${USER_PASSWORD_MAX_LENGTH} characters`,
+        status: 400,
+      });
+    }
+
+    const emailAlreadyInUse = await userRepository.findByEmail(trimmedEmail);
 
     if (emailAlreadyInUse) {
       throw new ServerError({ message: "Email already exists", status: 400 });
     }
-    const verify_email_token = jwt.sign({ email, name }, jwtSecret(), {
-      expiresIn: "24h",
-    });
+    const verify_email_token = jwt.sign(
+      { email: trimmedEmail, name: trimmedName },
+      jwtSecret(),
+      {
+        expiresIn: "24h",
+      },
+    );
 
-    await this.sendVerificationEmail(email, name, verify_email_token);
+    await this.sendVerificationEmail(trimmedEmail, trimmedName, verify_email_token);
     await userRepository.create({
-      name,
-      email,
+      name: trimmedName,
+      email: trimmedEmail,
       password,
     });
   }

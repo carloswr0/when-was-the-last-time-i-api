@@ -5,13 +5,23 @@ import { applyApiSerialization } from "./mongoose-serialization.ts";
 
 const SALT_ROUNDS = 10;
 
+/** Mirrors schema constraints — use for API validation before persist. */
+export const USER_NAME_MAX_LENGTH = 100;
+export const USER_NAME_MIN_LENGTH = 4;
+export const USER_PASSWORD_MIN_LENGTH = 8;
+export const USER_PASSWORD_MAX_LENGTH = 128;
+
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: [true, "Name is required"],
       trim: true,
-      maxlength: [100, "Name cannot exceed 100 characters"],
+      minLength: [USER_NAME_MIN_LENGTH, `Name must be longer than ${USER_NAME_MIN_LENGTH} characters`],
+      maxlength: [
+        USER_NAME_MAX_LENGTH,
+        `Name cannot exceed ${USER_NAME_MAX_LENGTH} characters`,
+      ],
     },
     email: {
       type: String,
@@ -24,7 +34,8 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 8 characters"],
+      minlength: [USER_PASSWORD_MIN_LENGTH, `Password must be at least ${USER_PASSWORD_MIN_LENGTH} characters`],
+      maxLength: [USER_PASSWORD_MAX_LENGTH, `Password cannot exceed ${USER_PASSWORD_MAX_LENGTH} characters`],
       select: false,
     },
     isVerified: {
