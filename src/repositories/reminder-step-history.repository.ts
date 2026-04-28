@@ -52,6 +52,13 @@ class ReminderStepHistoryRepository {
     const doc = await this.reminderStepHistoryModel.findByIdAndDelete(id);
     return doc?.toObject() as unknown as ReminderStepHistoryType | null;
   }
+
+  async deleteManyByRemindersGroupId(remindersGroupId: string): Promise<number> {
+    const result = await this.reminderStepHistoryModel.deleteMany({
+      remindersGroup: remindersGroupId,
+    });
+    return result.deletedCount ?? 0;
+  }
 }
 
 export const reminderHistoryRepository = new ReminderStepHistoryRepository(

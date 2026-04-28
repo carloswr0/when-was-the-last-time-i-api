@@ -4,13 +4,19 @@ import mailerTransporter from "../config/mailer.config.ts";
 import { ErrorCode } from "../constants/error-codes.ts";
 import { remindersGroupTypes } from "../constants/index.ts";
 import { getAuthUserId } from "../helpers/authUser.helper.ts";
+import type { RequestWithMembership } from "../middlewares/verifyRolePermissionAndBelonging.middleware.ts";
 import ServerError, {
   apiErrorBodyFromServerError,
   internalErrorBody,
 } from "../helpers/error.helper.ts";
 import { sendError, sendSuccess } from "../helpers/response.helper.ts";
 import { serverErrorMessage } from "../helpers/serverErrorMessage.helper.ts";
+import type { ReminderType } from "../models/Reminder.ts";
 import type { UserType } from "../models/User.ts";
+import { reminderHistoryRepository } from "../repositories/reminder-history.repository.ts";
+import { reminderRepository } from "../repositories/reminder.repository.ts";
+import { reminderStepRepository } from "../repositories/reminder-step.repository.ts";
+import { reminderHistoryRepository as reminderStepHistoryRepository } from "../repositories/reminder-step-history.repository.ts";
 import { remindersGroupRepository } from "../repositories/reminders-group.repository.ts";
 import { userRemindersGroupRepository } from "../repositories/user-reminders-group.repository.ts";
 import { userRepository } from "../repositories/user.repository.ts";
@@ -19,6 +25,12 @@ function plainUserId(user: UserType): string | null {
   const u = user as UserType & { id?: unknown; _id?: unknown };
   if (u.id != null) return String(u.id);
   if (u._id != null) return String(u._id);
+  return null;
+}
+
+function reminderDocId(reminder: ReminderType): string | null {
+  const r = reminder as ReminderType & { id?: unknown };
+  if (r.id != null) return String(r.id);
   return null;
 }
 
@@ -191,6 +203,74 @@ class GroupsController {
       }
 
       sendSuccess(res, 200, updatedGroup, "success");
+    } catch (error: unknown) {
+      if (error instanceof ServerError) {
+        sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
+        return;
+      }
+      const msg = "Internal server error";
+      sendError(res, 500, internalErrorBody(msg), msg);
+    }
+  }
+
+  async deleteGroup(req: Request, res: Response): Promise<void> {
+    try {
+      const { group_id } = req.params as {
+        group_id: string;
+      };
+      const userId = getAuthUserId(req);
+
+      if (!userId) {
+        const msg = "Unauthorized: user not authenticated";
+        sendError(res, 401, {
+          code: ErrorCode.UNAUTHORIZED,
+          details: [{ field: "authorization", message: msg }],
+        }, msg);
+        return;
+      }
+
+      if (typeof group_id !== "string" || !group_id.trim()) {
+        const msg = "group_id is required";
+        sendError(res, 400, {
+          code: ErrorCode.VALIDATION_ERROR,
+          details: [{ field: "group_id", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const gid = group_id.trim();
+      const group = await remindersGroupRepository.findById(gid);
+      if (!group) {
+        const msg = "Reminder group was not found";
+        sendError(res, 404, {
+          code: ErrorCode.NOT_FOUND,
+          details: [{ field: "group_id", message: msg }],
+        }, msg);
+        return;
+      }
+
+      const reminders = await reminderRepository.findByRemindersGroupIds([gid]);
+      const reminderIds = reminders
+        .map((r) => reminderDocId(r))
+        .filter((id): id is string => id != null);
+
+      await reminderStepRepository.deleteManyByReminderIds(reminderIds);
+      await reminderHistoryRepository.deleteManyByReminderIds(reminderIds);
+      await reminderStepHistoryRepository.deleteManyByRemindersGroupId(gid);
+      await reminderRepository.deleteManyByRemindersGroupId(gid);
+      await userRemindersGroupRepository.deleteManyByRemindersGroupId(gid);
+
+      const deleted = await remindersGroupRepository.delete(gid);
+      if (!deleted) {
+        const msg = "Reminder group was not found";
+        sendError(res, 404, {
+          code: ErrorCode.NOT_FOUND,
+          details: [{ field: "group_id", message: msg }],
+        }, msg);
+        return;
+      }
+
+      sendSuccess(res, 200, null, "Group deleted successfully");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
         sendError(res, error.status, apiErrorBodyFromServerError(error), error.message);
@@ -443,6 +523,52 @@ class GroupsController {
       });
 
       sendSuccess(res, 201, membership, "Invitation sent");
+    } catch (error: unknown) {
+      if (error instanceof ServerError) {
+        sendError(
+          res,
+          error.status,
+          apiErrorBodyFromServerError(error),
+          error.message,
+        );
+        return;
+      }
+      const msg = "Internal server error";
+      sendError(res, 500, internalErrorBody(msg), msg);
+    }
+  }
+
+  async acceptInvitation(req: Request, res: Response): Promise<void> {
+    try {
+      const membership = (req as RequestWithMembership).membership;
+      const m = membership as typeof membership & { id?: unknown; _id?: unknown };
+      const membershipId =
+        m.id != null ? String(m.id) : m._id != null ? String(m._id) : null;
+      if (!membershipId) {
+        const msg = "Membership record has no id";
+        sendError(res, 500, internalErrorBody(msg), msg);
+        return;
+      }
+
+      const updated = await userRemindersGroupRepository.update(membershipId, {
+        role: "member",
+      });
+
+      if (!updated) {
+        const msg = "Membership was not found";
+        sendError(
+          res,
+          404,
+          {
+            code: ErrorCode.NOT_FOUND,
+            details: [{ field: "membership", message: msg }],
+          },
+          msg,
+        );
+        return;
+      }
+
+      sendSuccess(res, 200, updated, "Invitation accepted");
     } catch (error: unknown) {
       if (error instanceof ServerError) {
         sendError(

@@ -68,7 +68,7 @@ function verifyRolePermissionAndBelonging(
       const noPermission = requiresRoleCheck && !userRoleIsValid;
       if (noPermission) {
         throw new ServerError({
-          message: "Rol no tiene permisos suficientes",
+          message: "You dont have permission to do that",
           status: 403,
         });
       }

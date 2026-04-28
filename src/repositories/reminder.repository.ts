@@ -53,6 +53,13 @@ class ReminderRepository {
     return doc?.toObject() as unknown as ReminderType | null;
   }
 
+  async deleteManyByRemindersGroupId(remindersGroupId: string): Promise<number> {
+    const result = await this.reminderModel.deleteMany({
+      remindersGroup: remindersGroupId,
+    });
+    return result.deletedCount ?? 0;
+  }
+
   async markAsDone(
     id: string,
     lastUpdatedBy: string,

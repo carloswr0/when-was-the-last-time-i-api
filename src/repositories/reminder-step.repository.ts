@@ -43,6 +43,16 @@ class ReminderStepRepository {
     const doc = await this.reminderStepModel.findByIdAndDelete(id);
     return doc?.toObject() as unknown as ReminderStepType | null;
   }
+
+  async deleteManyByReminderIds(reminderIds: string[]): Promise<number> {
+    if (reminderIds.length === 0) {
+      return 0;
+    }
+    const result = await this.reminderStepModel.deleteMany({
+      reminder: { $in: reminderIds },
+    });
+    return result.deletedCount ?? 0;
+  }
 }
 
 export const reminderStepRepository = new ReminderStepRepository(

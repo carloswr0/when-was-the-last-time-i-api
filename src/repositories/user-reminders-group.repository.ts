@@ -136,6 +136,13 @@ class UserRemindersGroupRepository {
     const doc = await this.userRemindersGroupModel.findByIdAndDelete(id);
     return doc?.toObject() as unknown as UserRemindersGroupType | null;
   }
+
+  async deleteManyByRemindersGroupId(remindersGroupId: string): Promise<number> {
+    const result = await this.userRemindersGroupModel.deleteMany({
+      remindersGroup: remindersGroupId,
+    });
+    return result.deletedCount ?? 0;
+  }
 }
 
 export const userRemindersGroupRepository = new UserRemindersGroupRepository(

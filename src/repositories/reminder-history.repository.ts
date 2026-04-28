@@ -31,6 +31,16 @@ class ReminderHistoryRepository {
     const docs = await this.reminderHistoryModel.find();
     return docs.map((d) => d.toObject() as unknown as ReminderHistoryType);
   }
+
+  async deleteManyByReminderIds(reminderIds: string[]): Promise<number> {
+    if (reminderIds.length === 0) {
+      return 0;
+    }
+    const result = await this.reminderHistoryModel.deleteMany({
+      reminder: { $in: reminderIds },
+    });
+    return result.deletedCount ?? 0;
+  }
 }
 
 export const reminderHistoryRepository = new ReminderHistoryRepository(
